@@ -87,23 +87,23 @@
             y: canvas.height / 2,
             width: 40,
             height: 40,
-            gravity: 0.6,
+            gravity: 0.12, // Reduced by 80%
             velocity: 0,
-            lift: -7.5,
+            lift: -1.5, // Reduced by 80%
             image: new Image()
         };
         bird.image.src = 'images/pngegg.png';
 
         // Background scrolling
         let backgroundX = 0;
-        const backgroundSpeed = 2;
+        const backgroundSpeed = 0.4; // Reduced by 80%
         let mountainsImage = new Image();
         let treesImage = new Image();
         mountainsImage.src = "images/mountain.png";
         treesImage.src = "images/tree.png";
 
         // Bullet properties
-        const bulletSpeed = 8;
+        const bulletSpeed = 1.6; // Reduced by 80%
 
         // Event listeners for jumping and shooting
         window.addEventListener("keydown", (event) => {
@@ -152,7 +152,7 @@
             let obstacle = {
                 x: canvas.width,
                 topHeight: obstacleHeight,
-                bottomY: obstacleHeight + 150
+                bottomY: obstacleHeight + 30 // Reduced by 80%
             };
             obstacles.push(obstacle);
         }
@@ -161,9 +161,9 @@
             let enemy = {
                 x: canvas.width,
                 y: Math.random() * (canvas.height - 40),
-                width: 30 + Math.random() * 20,
-                height: 30 + Math.random() * 20,
-                speed: 1 + Math.random() * 4,
+                width: 6 + Math.random() * 4, // Reduced by 80%
+                height: 6 + Math.random() * 4, // Reduced by 80%
+                speed: 0.2 + Math.random() * 0.8, // Reduced by 80%
                 color: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
                 shape: Math.random() > 0.5 ? 'circle' : 'triangle'
             };
@@ -188,7 +188,7 @@
 
             if (gameMode === 'obstacles') {
                 obstacles.forEach((obstacle, index) => {
-                    obstacle.x -= 4;
+                    obstacle.x -= 0.8; // Reduced by 80%
 
                     if (obstacle.x + 60 < 0) {
                         obstacles.splice(index, 1);
