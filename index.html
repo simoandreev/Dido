@@ -277,32 +277,6 @@
             });
         }
 
-        function drawObstaclesOrEnemies() {
-            if (gameMode === 'obstacles') {
-                obstacles.forEach(obstacle => {
-                    ctx.fillStyle = "green";
-                    ctx.fillRect(obstacle.x, 0, 60, obstacle.topHeight);
-                    ctx.fillRect(obstacle.x, obstacle.bottomY, 60, canvas.height - obstacle.bottomY);
-                });
-            } else if (gameMode === 'enemies') {
-                enemies.forEach(enemy => {
-                    ctx.fillStyle = enemy.color;
-                    if (enemy.shape === 'circle') {
-                        ctx.beginPath();
-                        ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.width / 2, 0, 2 * Math.PI);
-                        ctx.fill();
-                    } else if (enemy.shape === 'triangle') {
-                        ctx.beginPath();
-                        ctx.moveTo(enemy.x, enemy.y + enemy.height);
-                        ctx.lineTo(enemy.x + enemy.width / 2, enemy.y);
-                        ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height);
-                        ctx.closePath();
-                        ctx.fill();
-                    }
-                });
-            }
-        }
-
         function detectMobile() {
             return /Mobi|Android/i.test(navigator.userAgent);
         }
@@ -316,6 +290,7 @@
             ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
             ctx.font = "30px Arial";
             ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 60);
+            document.getElementById("menu").style.display = "block";
             if (soundOn) hitSound.play();
         }
 
@@ -341,7 +316,8 @@
             }
         }
 
-        // Hide menu on load
+        // Initialize the game
+        document.getElementById("startGame").addEventListener("click", startGame);
         document.getElementById("menu").style.display = "block";
     </script>
 </body>
