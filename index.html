@@ -28,6 +28,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
+            display: none; /* Initially hidden */
         }
         #menu button {
             font-size: 20px;
@@ -177,6 +178,7 @@
 
             if (bird.y + bird.height > canvas.height || bird.y < 0) {
                 endGame();
+                return; // Exit the update function to avoid further processing
             }
 
             backgroundX -= backgroundSpeed;
@@ -344,7 +346,6 @@
 
         // Initialize the game
         document.getElementById("startGame").addEventListener("click", startGame);
-        document.getElementById("menu").style.display = "block";
     </script>
 </body>
 </html>
