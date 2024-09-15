@@ -85,7 +85,7 @@
     <button id="resetGame" onclick="resetGame()">Reset Game</button>
 </div>
 
-<audio id="hitSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
+<audio id="hitSound" src="sounds/hit-sound.mp3" preload="auto"></audio>
 <audio id="pointSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
 
 <script>
@@ -128,7 +128,7 @@
     treesImage.src = "images/tree.png";
 
     const obstacleWidth = 60;
-    const obstacleGap = 300; // Increased distance between obstacles
+    const obstacleGap = 900; // Increased distance between obstacles by 200% (from 300 to 900)
     const obstacleSpeed = 0.8; // 80% reduction
     const bulletSpeed = 1.6; // 80% reduction
     const enemySpeed = 1.6; // 80% reduction
