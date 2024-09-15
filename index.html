@@ -288,28 +288,32 @@
         ctx.drawImage(treesImage, backgroundX + canvas.width, canvas.height / 2, canvas.width, canvas.height / 2);
 
         // Draw obstacles
-        obstacles.forEach(obstacle => {
-            ctx.fillStyle = "#228B22";
-            ctx.fillRect(obstacle.x, 0, obstacleWidth, obstacle.topHeight);
-            ctx.fillRect(obstacle.x, obstacle.bottomY, obstacleWidth, canvas.height - obstacle.bottomY);
-        });
+        if (gameMode === 'obstacles') {
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = "#228B22";
+                ctx.fillRect(obstacle.x, 0, obstacleWidth, obstacle.topHeight);
+                ctx.fillRect(obstacle.x, obstacle.bottomY, obstacleWidth, canvas.height - obstacle.bottomY);
+            });
+        }
 
         // Draw enemies
-        enemies.forEach(enemy => {
-            ctx.fillStyle = enemy.color;
-            if (enemy.shape === 'circle') {
-                ctx.beginPath();
-                ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (enemy.shape === 'triangle') {
-                ctx.beginPath();
-                ctx.moveTo(enemy.x, enemy.y - enemy.height / 2);
-                ctx.lineTo(enemy.x - enemy.width / 2, enemy.y + enemy.height / 2);
-                ctx.lineTo(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
-                ctx.closePath();
-                ctx.fill();
-            }
-        });
+        if (gameMode === 'enemies') {
+            enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color;
+                if (enemy.shape === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (enemy.shape === 'triangle') {
+                    ctx.beginPath();
+                    ctx.moveTo(enemy.x, enemy.y - enemy.height / 2);
+                    ctx.lineTo(enemy.x - enemy.width / 2, enemy.y + enemy.height / 2);
+                    ctx.lineTo(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            });
+        }
 
         // Draw bullets
         bullets.forEach(bullet => {
@@ -373,7 +377,11 @@
         }
     }
 
-    startGame();
+    // Initialize game
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('menu').style.display = 'block';
+    });
+
 </script>
 
 </body>
