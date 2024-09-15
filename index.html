@@ -319,13 +319,14 @@ function resetGame() {
 
 function startGame() {
     // Hide the menu
-    document.getElementById("menu").style.display = 'none';
-
     // Reset game state
     resetGame();
 
     // Start the game loop
     gameLoop();
+    document.getElementById("menu").style.display = 'none';
+
+    
 }
 
 function gameLoop() {
