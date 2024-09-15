@@ -119,9 +119,7 @@ window.addEventListener("mousedown", () => {
 });
 
 document.getElementById("startGame").addEventListener("click", () => {
-    document.getElementById("menu").style.display = 'none'; // Hide menu
-    resetGame();
-    gameLoop();
+    startGame();
 });
 
 document.getElementById("gameMode").addEventListener("change", (event) => {
@@ -314,7 +312,20 @@ function resetGame() {
     enemies = [];
     frame = 0;
     automaticShooting = false;
-    document.getElementById("menu").style.display = 'none'; // Hide menu when starting new game
+
+    // Ensure the menu is visible
+    document.getElementById("menu").style.display = 'block';
+}
+
+function startGame() {
+    // Hide the menu
+    document.getElementById("menu").style.display = 'none';
+
+    // Reset game state
+    resetGame();
+
+    // Start the game loop
+    gameLoop();
 }
 
 function gameLoop() {
@@ -325,6 +336,7 @@ function gameLoop() {
 function detectMobile() {
     return /Mobi|Android/i.test(navigator.userAgent);
 }
+
 
 </script>
 
