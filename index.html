@@ -85,7 +85,7 @@
     <button id="resetGame" onclick="resetGame()">Reset Game</button>
 </div>
 
-<audio id="hitSound" src="sounds/hit-sound.mp3" preload="auto"></audio>
+<audio id="hitSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
 <audio id="pointSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
 
 <script>
@@ -128,13 +128,11 @@
     treesImage.src = "images/tree.png";
 
     const obstacleWidth = 60;
-    const obstacleGap = 300; // Original gap
+    const obstacleGap = 300; // Restored original gap
     const horizontalObstacleSpacing = 900; // Increased horizontal spacing
     const obstacleSpeed = 0.8; // 80% reduction
     const bulletSpeed = 1.6; // 80% reduction
     const enemySpeed = 1.6; // 80% reduction
-
-    const obstacleSpawnInterval = 200; // Increased spawn interval for obstacles
 
     window.addEventListener("keydown", (event) => {
         if (event.code === "Space" && gameMode === 'enemies') {
@@ -275,6 +273,10 @@
                 });
             });
 
+            if (frame % 100 === 0) {
+                createEnemy();
+            }
+
             let currentTime = Date.now();
             if (automaticShooting && (currentTime - lastShootTime > 500)) {
                 shoot();
@@ -282,7 +284,7 @@
             }
         }
 
-        if (frame % obstacleSpawnInterval === 0 && gameMode === 'obstacles') {
+        if (frame % 100 === 0 && gameMode === 'obstacles') {
             createObstacle();
         }
 
@@ -292,8 +294,11 @@
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        ctx.drawImage(treesImage, backgroundX, 0, canvas.width, canvas.height);
-        ctx.drawImage(treesImage, backgroundX + canvas.width, 0, canvas.width, canvas.height);
+        ctx.drawImage(mountainsImage, backgroundX, 0, canvas.width, canvas.height / 2);
+        ctx.drawImage(mountainsImage, backgroundX + canvas.width, 0, canvas.width, canvas.height / 2);
+
+        ctx.drawImage(treesImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
+        ctx.drawImage(treesImage, backgroundX + canvas.width, canvas.height / 2, canvas.width, canvas.height / 2);
 
         ctx.drawImage(bird.image, bird.x, bird.y, bird.width, bird.height);
 
@@ -308,86 +313,97 @@
                 ctx.fillStyle = enemy.color;
                 if (enemy.shape === 'circle') {
                     ctx.beginPath();
-                    ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, Math.PI * 2);
+                    ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.width / 2, 0, Math.PI * 2);
                     ctx.fill();
                 } else if (enemy.shape === 'triangle') {
                     ctx.beginPath();
-                    ctx.moveTo(enemy.x, enemy.y - enemy.height / 2);
-                    ctx.lineTo(enemy.x - enemy.width / 2, enemy.y + enemy.height / 2);
-                    ctx.lineTo(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    ctx.moveTo(enemy.x, enemy.y + enemy.height);
+                    ctx.lineTo(enemy.x + enemy.width / 2, enemy.y);
+                    ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height);
                     ctx.closePath();
                     ctx.fill();
                 }
             });
-        }
 
-        bullets.forEach(bullet => {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-        });
+            bullets.forEach(bullet => {
+                ctx.fillStyle = 'black';
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+        }
 
         if (gameOver) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-
-        requestAnimationFrame(() => {
-            update();
-            draw();
-        });
     }
 
     function startGame() {
-        document.getElementById("menu").style.display = "none";
-        document.getElementById("gameOverText").style.display = "none";
-        document.getElementById("resetGame").style.display = "none";
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('gameOverText').style.display = 'none';
+        document.getElementById('resetGame').style.display = 'none';
+
         gameOver = false;
         score = 0;
         document.getElementById('score').innerText = score;
-        bird.y = canvas.height / 2;
-        bird.velocity = 0;
+        frame = 0;
         obstacles = [];
         bullets = [];
         enemies = [];
-        frame = 0;
+        bird.y = canvas.height / 2;
+        bird.velocity = 0;
 
-        if (detectMobile()) {
-            automaticShooting = true;
-        } else {
-            automaticShooting = false;
+        gameMode = document.querySelector('input[name="gameMode"]:checked').value;
+        soundOn = document.getElementById('soundToggle').checked;
+        automaticShooting = detectMobile() && gameMode === 'enemies';
+
+        if (automaticShooting) {
+            lastShootTime = Date.now();
         }
 
-        requestAnimationFrame(() => {
-            update();
-            draw();
-        });
+        requestAnimationFrame(gameLoop);
     }
 
     function endGame() {
-        document.getElementById("gameOverText").style.display = "block";
-        document.getElementById("resetGame").style.display = "block";
+        document.getElementById('gameOverText').style.display = 'block';
         document.getElementById('finalScore').innerText = score;
-        document.getElementById("menu").style.display = "none";
-        gameOver = true;
+        document.getElementById('resetGame').style.display = 'block';
     }
 
     function resetGame() {
-        startGame();
+        document.getElementById('menu').style.display = 'block';
+        document.getElementById('gameOverText').style.display = 'none';
+        document.getElementById('resetGame').style.display = 'none';
+
+        gameOver = false;
     }
 
-    function initializeGame() {
-        document.getElementById("menu").style.display = "block";
-        document.getElementById("gameOverText").style.display = "none";
-        document.getElementById("resetGame").style.display = "none";
-        document.getElementById("soundToggle").addEventListener('change', (event) => {
-            soundOn = event.target.checked;
-        });
-        document.querySelector('input[name="gameMode"]').addEventListener('change', (event) => {
-            gameMode = event.target.value;
-        });
+    function gameLoop() {
+        if (!gameOver) {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
     }
 
-    initializeGame();
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.code === 'Space') {
+            jump();
+        }
+    });
+
+    window.addEventListener('touchstart', (event) => {
+        jump();
+        event.preventDefault();
+    });
+
+    document.querySelector('input[name="gameMode"]').addEventListener('change', () => {
+        automaticShooting = detectMobile() && document.querySelector('input[name="gameMode"]:checked').value === 'enemies';
+    });
 </script>
 
 </body>
