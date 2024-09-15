@@ -70,6 +70,7 @@
     let soundOn = true;
     let automaticShooting = false;
     const shootInterval = 500; // milliseconds
+    let lastShootTime = 0;
 
     // Set canvas dimensions
     canvas.width = window.innerWidth;
@@ -243,11 +244,11 @@
             if (frame % 100 === 0) {
                 createEnemy();
             }
-        }
 
-        if (automaticShooting) {
-            if (frame % 30 === 0) { // Shooting interval
-                shoot();
+            if (detectMobile()) {
+                if (frame % 30 === 0) {
+                    shoot();
+                }
             }
         }
 
@@ -313,13 +314,8 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // Detect if on mobile and set automatic shooting if in enemy mode
     function detectMobile() {
         return /Mobi|Android/i.test(navigator.userAgent);
-    }
-
-    if (detectMobile() && gameMode === 'enemies') {
-        automaticShooting = true;
     }
 
 </script>
