@@ -22,352 +22,331 @@
             font-family: Arial, sans-serif;
             color: #333;
         }
-        #menu {
+        #menu, #gameOverText, #resetGame {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            display: block; /* Initially visible */
         }
-        #menu button {
-            font-size: 20px;
-            margin: 10px;
-        }
-        #gameMode, #sound {
-            font-size: 20px;
-        }
-        #gameOverText {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            display: none; /* Initially hidden */
-        }
-        #gameOverText h1, #gameOverText h2 {
-            color: black;
-            font-family: Arial, sans-serif;
+        #resetGame {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <div id="score-container">
-        Точки: <span id="score">0</span>
-    </div>
-    <div id="menu">
-        <h1>Flappy Bird</h1>
-        <label for="gameMode">Game Mode:</label>
-        <select id="gameMode">
-            <option value="obstacles">Obstacles</option>
-            <option value="enemies">Enemies</option>
-        </select>
-        <br>
-        <label for="sound">Sound:</label>
-        <input type="checkbox" id="sound" checked>
-        <br>
-        <button id="startGame">Start Game</button>
-    </div>
-    <div id="gameOverText">
-        <h1>Game Over</h1>
-        <h2>Final Score: <span id="finalScore">0</span></h2>
-        <button id="restartGame">Restart Game</button>
-    </div>
-    <audio id="piuSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
-    <audio id="hitSound" src="sounds/hit-sound.mp3" preload="auto"></audio>
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const piuSound = document.getElementById("piuSound");
-        const hitSound = document.getElementById("hitSound");
-        const shootInterval = 500; // milliseconds
-        let lastShootTime = 0;
 
-        // Set canvas dimensions
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+<canvas id="gameCanvas"></canvas>
+<div id="score-container">
+    Точки: <span id="score">0</span>
+</div>
 
-        let score = 0;
-        let obstacles = [];
-        let bullets = [];
-        let enemies = [];
-        let frame = 0;
-        let gameOver = false;
-        let gameMode = 'obstacles';
-        let soundOn = true;
-        let automaticShooting = false;
+<div id="menu">
+    <h1>Flappy Bird Game</h1>
+    <button id="startGame">Start Game</button>
+    <br>
+    <label>
+        <input type="checkbox" id="soundToggle" checked>
+        Sound
+    </label>
+    <br>
+    <label>
+        <input type="radio" name="gameMode" value="obstacles" checked>
+        Obstacles
+    </label>
+    <label>
+        <input type="radio" name="gameMode" value="enemies">
+        Enemies
+    </label>
+</div>
 
-        // Bird object with texture (ghost)
-        let bird = {
-            x: 50,
-            y: canvas.height / 2,
-            width: 40,
-            height: 40,
-            gravity: 0.12, // Reduced by 80%
-            velocity: 0,
-            lift: -1.5, // Reduced by 80%
-            image: new Image()
-        };
-        bird.image.src = 'images/pngegg.png';
+<div id="gameOverText">
+    <h1>Game Over</h1>
+    <p>Final Score: <span id="finalScore">0</span></p>
+    <button id="resetGame">Reset Game</button>
+</div>
 
-        // Background scrolling
-        let backgroundX = 0;
-        const backgroundSpeed = 0.4; // Reduced by 80%
-        let mountainsImage = new Image();
-        let treesImage = new Image();
-        mountainsImage.src = "images/mountain.png";
-        treesImage.src = "images/tree.png";
+<audio id="hitSound" src="sounds/hit.mp3" preload="auto"></audio>
+<audio id="pointSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
 
-        // Bullet properties
-        const bulletSpeed = 1.6; // Reduced by 80%
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const hitSound = document.getElementById("hitSound");
+    const pointSound = document.getElementById("pointSound");
 
-        // Event listeners for jumping and shooting
-        window.addEventListener("keydown", (event) => {
-            if (event.code === "Space" && gameMode === 'enemies' && !gameOver) {
-                shoot();
-            }
-        });
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-        window.addEventListener("mousedown", () => {
-            if (!gameOver) {
-                jump();
-            }
-        });
+    const bird = {
+        x: 50,
+        y: canvas.height / 2,
+        width: 40,
+        height: 40,
+        gravity: 0.6,
+        velocity: 0,
+        lift: -15, // Increased jump height
+        image: new Image()
+    };
+    bird.image.src = 'images/pngegg.png';
 
-        document.getElementById("startGame").addEventListener("click", () => {
-            startGame();
-        });
+    const mountainsImage = new Image();
+    const treesImage = new Image();
+    mountainsImage.src = "images/mountain.png";
+    treesImage.src = "images/tree.png";
 
-        document.getElementById("restartGame").addEventListener("click", () => {
-            startGame();
-        });
+    let obstacles = [];
+    let bullets = [];
+    let enemies = [];
+    let frame = 0;
+    let score = 0;
+    let gameOver = false;
+    let gameMode = 'obstacles'; // Default mode
+    let soundOn = true;
+    let automaticShooting = false;
+    let lastShootTime = 0;
+    const shootInterval = 500; // 500 ms interval for automatic shooting on mobile
+    let backgroundX = 0;
 
-        document.getElementById("gameMode").addEventListener("change", (event) => {
-            gameMode = event.target.value;
-        });
+    // Event Listeners
+    document.getElementById('startGame').addEventListener('click', startGame);
+    document.getElementById('resetGame').addEventListener('click', resetGame);
+    document.getElementById('soundToggle').addEventListener('change', (e) => {
+        soundOn = e.target.checked;
+    });
 
-        document.getElementById("sound").addEventListener("change", () => {
-            soundOn = document.getElementById("sound").checked;
-        });
+    document.addEventListener('keydown', (event) => {
+        if (event.code === 'Space') {
+            shoot();
+        }
+    });
 
-        function jump() {
-            bird.velocity = bird.lift;
+    document.addEventListener('mousedown', jump);
+
+    function update() {
+        if (gameOver) return;
+
+        bird.velocity += bird.gravity;
+        bird.y += bird.velocity;
+
+        if (bird.y + bird.height > canvas.height || bird.y < 0) {
+            endGame();
         }
 
-        function shoot() {
-            let bullet = {
-                x: bird.x + bird.width,
-                y: bird.y + bird.height / 2,
-                width: 10,
-                height: 5,
-                directionX: bulletSpeed,
-                directionY: (Math.random() - 0.5) * 2
-            };
-            bullets.push(bullet);
-            if (soundOn) piuSound.play();
+        backgroundX -= 0.4; // Slowed down by 80%
+        if (backgroundX <= -canvas.width) {
+            backgroundX = 0;
         }
 
-        function createObstacle() {
-            let obstacleHeight = Math.random() * (canvas.height / 2);
-            let obstacle = {
-                x: canvas.width,
-                topHeight: obstacleHeight,
-                bottomY: obstacleHeight + 60 // Increased by 80%
-            };
-            obstacles.push(obstacle);
-        }
+        if (gameMode === 'obstacles') {
+            obstacles.forEach((obstacle, index) => {
+                obstacle.x -= 0.8; // Slowed down by 80%
 
-        function createEnemy() {
-            let enemy = {
-                x: canvas.width,
-                y: Math.random() * (canvas.height - 40),
-                width: 20 + Math.random() * 20, // Reset to previous size
-                height: 20 + Math.random() * 20, // Reset to previous size
-                speed: 0.2 + Math.random() * 0.8, // Reduced by 80%
-                color: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
-                shape: Math.random() > 0.5 ? 'circle' : 'triangle'
-            };
-            enemies.push(enemy);
-        }
+                if (obstacle.x + 60 < 0) {
+                    obstacles.splice(index, 1);
+                    score += 5;
+                    document.getElementById('score').innerText = score;
+                    if (soundOn) pointSound.play();
+                }
 
-        function update() {
-            if (gameOver) return;
-
-            bird.velocity += bird.gravity;
-            bird.y += bird.velocity;
-
-            if (bird.y + bird.height > canvas.height || bird.y < 0) {
-                endGame();
-                return; // Exit the update function to avoid further processing
-            }
-
-            backgroundX -= backgroundSpeed;
-            if (backgroundX <= -canvas.width) {
-                backgroundX = 0;
-            }
-
-            if (gameMode === 'obstacles') {
-                obstacles.forEach((obstacle, index) => {
-                    obstacle.x -= 0.8; // Reduced by 80%
-
-                    if (obstacle.x + 60 < 0) {
-                        obstacles.splice(index, 1);
-                        score += 5;
-                        document.getElementById('score').innerText = score;
-                        if (soundOn) piuSound.play();
+                if (bird.x + bird.width > obstacle.x && bird.x < obstacle.x + 60) {
+                    if (bird.y < obstacle.topHeight || bird.y + bird.height > obstacle.bottomY) {
+                        endGame();
                     }
+                }
+            });
 
-                    if (bird.x + bird.width > obstacle.x && bird.x < obstacle.x + 60) {
-                        if (bird.y < obstacle.topHeight || bird.y + bird.height > obstacle.bottomY) {
-                            endGame();
+            if (frame % 200 === 0) { // Increased by 80%
+                createObstacle();
+            }
+
+        } else if (gameMode === 'enemies') {
+            enemies.forEach((enemy, index) => {
+                enemy.x -= 1.6; // Slowed down by 80%
+
+                if (enemy.x + enemy.width < 0) {
+                    enemies.splice(index, 1);
+                }
+
+                if (bird.x + bird.width > enemy.x && bird.x < enemy.x + enemy.width) {
+                    if (bird.y < enemy.y + enemy.height && bird.y + bird.height > enemy.y) {
+                        endGame();
+                    }
+                }
+            });
+
+            if (frame % 120 === 0) { // Increased by 80%
+                createEnemy();
+            }
+
+            let currentTime = new Date().getTime();
+            if (detectMobile() && automaticShooting) {
+                if (currentTime - lastShootTime > shootInterval) {
+                    shoot();
+                    lastShootTime = currentTime;
+                }
+            }
+        }
+
+        bullets.forEach((bullet, bIndex) => {
+            bullet.x += bullet.directionX;
+            bullet.y += bullet.directionY;
+
+            if (bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                bullets.splice(bIndex, 1);
+            }
+
+            if (gameMode === 'enemies') {
+                enemies.forEach((enemy, eIndex) => {
+                    if (bullet.x + bullet.width > enemy.x && bullet.x < enemy.x + enemy.width) {
+                        if (bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) {
+                            enemies.splice(eIndex, 1);
+                            bullets.splice(bIndex, 1);
+                            score += 5;
+                            document.getElementById('score').innerText = score;
+                            if (soundOn) pointSound.play();
                         }
                     }
                 });
-
-                if (frame % 200 === 0) { // Increased by 80%
-                    createObstacle();
-                }
-
-            } else if (gameMode === 'enemies') {
-                bullets.forEach((bullet, bIndex) => {
-                    bullet.x += bullet.directionX;
-                    bullet.y += bullet.directionY;
-
-                    if (bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
-                        bullets.splice(bIndex, 1);
-                    }
-
-                    enemies.forEach((enemy, eIndex) => {
-                        if (bullet.x + bullet.width > enemy.x && bullet.x < enemy.x + enemy.width) {
-                            if (bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) {
-                                enemies.splice(eIndex, 1);
-                                bullets.splice(bIndex, 1);
-                                score += 5;
-                                document.getElementById('score').innerText = score;
-                                if (soundOn) piuSound.play();
-                            }
-                        }
-                    });
-                });
-
-                enemies.forEach((enemy, index) => {
-                    enemy.x -= enemy.speed;
-
-                    if (enemy.x + enemy.width < 0) {
-                        enemies.splice(index, 1);
-                    }
-
-                    if (bird.x + bird.width > enemy.x && bird.x < enemy.x + enemy.width) {
-                        if (bird.y < enemy.y + enemy.height && bird.y + bird.height > enemy.y) {
-                            endGame();
-                        }
-                    }
-                });
-
-                if (frame % 100 === 0) { // Increased by 80%
-                    createEnemy();
-                }
-
-                let currentTime = new Date().getTime();
-                if (detectMobile() && automaticShooting) {
-                    if (currentTime - lastShootTime > shootInterval) {
-                        shoot();
-                        lastShootTime = currentTime;
-                    }
-                }
             }
+        });
 
-            frame++;
-            draw();
-        }
+        frame++;
+        draw();
+    }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw background
-            ctx.drawImage(mountainsImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
-            ctx.drawImage(treesImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
+        ctx.drawImage(mountainsImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
+        ctx.drawImage(treesImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
 
-            ctx.drawImage(bird.image, bird.x, bird.y, bird.width, bird.height);
+        ctx.drawImage(bird.image, bird.x, bird.y, bird.width, bird.height);
 
-            drawObstaclesOrEnemies();
+        drawObstaclesOrEnemies();
 
-            bullets.forEach(bullet => {
-                ctx.fillStyle = "red";
-                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        bullets.forEach(bullet => {
+            ctx.fillStyle = "red";
+            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        });
+    }
+
+    function drawObstaclesOrEnemies() {
+        if (gameMode === 'obstacles') {
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = "green";
+                ctx.fillRect(obstacle.x, 0, 60, obstacle.topHeight);
+                ctx.fillRect(obstacle.x, obstacle.bottomY, 60, canvas.height - obstacle.bottomY);
+            });
+        } else if (gameMode === 'enemies') {
+            enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color;
+                if (enemy.shape === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                } else if (enemy.shape === 'triangle') {
+                    ctx.beginPath();
+                    ctx.moveTo(enemy.x, enemy.y);
+                    ctx.lineTo(enemy.x + enemy.width, enemy.y);
+                    ctx.lineTo(enemy.x + enemy.width / 2, enemy.y - enemy.height);
+                    ctx.closePath();
+                    ctx.fill();
+                }
             });
         }
+    }
 
-        function drawObstaclesOrEnemies() {
-            if (gameMode === 'obstacles') {
-                obstacles.forEach(obstacle => {
-                    ctx.fillStyle = "green";
-                    ctx.fillRect(obstacle.x, 0, 60, obstacle.topHeight);
-                    ctx.fillRect(obstacle.x, obstacle.bottomY, 60, canvas.height - obstacle.bottomY);
-                });
-            } else if (gameMode === 'enemies') {
-                enemies.forEach(enemy => {
-                    ctx.fillStyle = enemy.color;
-                    if (enemy.shape === 'circle') {
-                        ctx.beginPath();
-                        ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, 2 * Math.PI);
-                        ctx.fill();
-                    } else if (enemy.shape === 'triangle') {
-                        ctx.beginPath();
-                        ctx.moveTo(enemy.x, enemy.y);
-                        ctx.lineTo(enemy.x + enemy.width, enemy.y);
-                        ctx.lineTo(enemy.x + enemy.width / 2, enemy.y - enemy.height);
-                        ctx.closePath();
-                        ctx.fill();
-                    }
-                });
-            }
-        }
+    function detectMobile() {
+        return /Mobi|Android/i.test(navigator.userAgent);
+    }
 
-        function detectMobile() {
-            return /Mobi|Android/i.test(navigator.userAgent);
-        }
+    function endGame() {
+        gameOver = true;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "black";
+        ctx.font = "30px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = "20px Arial";
+        ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 20);
+        document.getElementById("gameOverText").style.display = "block";
+        document.getElementById("finalScore").innerText = score;
+        document.getElementById("resetGame").style.display = "block";
+        if (soundOn) hitSound.play();
+    }
 
-        function endGame() {
-            gameOver = true;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "black";
-            ctx.font = "30px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 20);
-            ctx.font = "20px Arial";
-            ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 20);
-            document.getElementById("gameOverText").style.display = "block";
-            document.getElementById("finalScore").innerText = score;
-            if (soundOn) hitSound.play();
-        }
+    function startGame() {
+        gameOver = false;
+        score = 0;
+        document.getElementById('score').innerText = score;
+        bird.y = canvas.height / 2;
+        bird.velocity = 0;
+        obstacles = [];
+        bullets = [];
+        enemies = [];
+        frame = 0;
+        backgroundX = 0;
+        document.getElementById("menu").style.display = "none";
+        document.getElementById("gameOverText").style.display = "none";
+        document.getElementById("resetGame").style.display = "none";
+        gameMode = document.querySelector('input[name="gameMode"]:checked').value;
+        soundOn = document.getElementById('soundToggle').checked;
+        automaticShooting = detectMobile() && gameMode === 'enemies';
+        lastShootTime = 0;
+        requestAnimationFrame(gameLoop);
+    }
 
-        function startGame() {
-            gameOver = false;
-            score = 0;
-            document.getElementById('score').innerText = score;
-            bird.y = canvas.height / 2;
-            bird.velocity = 0;
-            obstacles = [];
-            bullets = [];
-            enemies = [];
-            frame = 0;
-            backgroundX = 0;
-            document.getElementById("menu").style.display = "none";
-            document.getElementById("gameOverText").style.display = "none";
+    function resetGame() {
+        startGame();
+    }
+
+    function gameLoop() {
+        update();
+        if (!gameOver) {
             requestAnimationFrame(gameLoop);
         }
+    }
 
-        function gameLoop() {
-            update();
-            if (!gameOver) {
-                requestAnimationFrame(gameLoop);
-            }
-        }
+    function createObstacle() {
+        let obstacleHeight = Math.random() * (canvas.height / 2);
+        let obstacle = {
+            x: canvas.width,
+            topHeight: obstacleHeight,
+            bottomY: obstacleHeight + 150
+        };
+        obstacles.push(obstacle);
+    }
 
-        // Initialize the game
-        document.getElementById("startGame").addEventListener("click", startGame);
-    </script>
+    function createEnemy() {
+        let shapes = ['circle', 'triangle'];
+        let colors = ['red', 'blue', 'green', 'yellow'];
+        let enemy = {
+            x: canvas.width,
+            y: Math.random() * canvas.height,
+            width: 30 + Math.random() * 30,
+            height: 30 + Math.random() * 30,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            shape: shapes[Math.floor(Math.random() * shapes.length)]
+        };
+        enemies.push(enemy);
+    }
+
+    function shoot() {
+        let bullet = {
+            x: bird.x + bird.width,
+            y: bird.y + bird.height / 2,
+            width: 10,
+            height: 5,
+            directionX: 5,
+            directionY: 0
+        };
+        bullets.push(bullet);
+    }
+
+    function jump() {
+        bird.velocity = bird.lift;
+    }
+</script>
 </body>
 </html>
