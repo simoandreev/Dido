@@ -28,6 +28,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
+            display: block;
         }
         #menu button {
             font-size: 20px;
@@ -58,268 +59,273 @@
 </div>
 
 <audio id="piuSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
-<audio id="hitSound" src="sounds/hit-sound.mp3" preload="auto"></audio>
+<audio id="hitSound" src="ssounds/point-101soundboards.mp3" preload="auto"></audio>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const piuSound = document.getElementById("piuSound");
-    const hitSound = document.getElementById("hitSound");
+const ctx = canvas.getContext("2d");
+const piuSound = document.getElementById("piuSound");
+const hitSound = document.getElementById("hitSound");
 
-    let gameMode = 'obstacles';
-    let soundOn = true;
-    let automaticShooting = false;
-    const shootInterval = 500; // milliseconds
-    let lastShootTime = 0;
+let gameMode = 'obstacles';
+let soundOn = true;
+let automaticShooting = false;
+const shootInterval = 500; // milliseconds
+let lastShootTime = 0;
 
-    // Set canvas dimensions
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+// Set canvas dimensions
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-    let score = 0;
-    let obstacles = [];
-    let bullets = [];
-    let enemies = [];
-    let frame = 0;
+let score = 0;
+let obstacles = [];
+let bullets = [];
+let enemies = [];
+let frame = 0;
 
-    // Bird object with texture (ghost)
-    let bird = {
-        x: 50,
-        y: canvas.height / 2,
-        width: 40,
-        height: 40,
-        gravity: 0.6,
-        velocity: 0,
-        lift: -7.5,
-        image: new Image()
+// Bird object with texture (ghost)
+let bird = {
+    x: 50,
+    y: canvas.height / 2,
+    width: 40,
+    height: 40,
+    gravity: 0.6,
+    velocity: 0,
+    lift: -7.5,
+    image: new Image()
+};
+bird.image.src = 'images/pngegg.png';
+
+// Background scrolling
+let backgroundX = 0;
+const backgroundSpeed = 2;
+let mountainsImage = new Image();
+let treesImage = new Image();
+mountainsImage.src = "images/mountain.png";
+treesImage.src = "images/tree.png";
+
+// Bullet properties
+const bulletSpeed = 8;
+
+// Event listeners for jumping and shooting
+window.addEventListener("keydown", (event) => {
+    if (event.code === "Space" && gameMode === 'enemies') {
+        shoot();
+    }
+});
+
+window.addEventListener("mousedown", () => {
+    jump();
+});
+
+document.getElementById("startGame").addEventListener("click", () => {
+    document.getElementById("menu").style.display = 'none'; // Hide menu
+    resetGame();
+    gameLoop();
+});
+
+document.getElementById("gameMode").addEventListener("change", (event) => {
+    gameMode = event.target.value;
+});
+
+document.getElementById("sound").addEventListener("change", () => {
+    soundOn = document.getElementById("sound").checked;
+});
+
+function jump() {
+    bird.velocity = bird.lift;
+}
+
+function shoot() {
+    let bullet = {
+        x: bird.x + bird.width,
+        y: bird.y + bird.height / 2,
+        width: 10,
+        height: 5,
+        directionX: bulletSpeed,
+        directionY: (Math.random() - 0.5) * 2
     };
-    bird.image.src = 'images/pngegg.png';
+    bullets.push(bullet);
+    if (soundOn) piuSound.play();
+}
 
-    // Background scrolling
-    let backgroundX = 0;
-    const backgroundSpeed = 2;
-    let mountainsImage = new Image();
-    let treesImage = new Image();
-    mountainsImage.src = "images/mountain.png";
-    treesImage.src = "images/tree.png";
+function createObstacle() {
+    let obstacleHeight = Math.random() * (canvas.height / 2);
+    let obstacle = {
+        x: canvas.width,
+        topHeight: obstacleHeight,
+        bottomY: obstacleHeight + 150
+    };
+    obstacles.push(obstacle);
+}
 
-    // Bullet properties
-    const bulletSpeed = 8;
+function createEnemy() {
+    let enemy = {
+        x: canvas.width,
+        y: Math.random() * (canvas.height - 40),
+        width: 30 + Math.random() * 20,
+        height: 30 + Math.random() * 20,
+        speed: 1 + Math.random() * 4,
+        color: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+        shape: Math.random() > 0.5 ? 'circle' : 'triangle'
+    };
+    enemies.push(enemy);
+}
 
-    // Event listeners for jumping and shooting
-    window.addEventListener("keydown", (event) => {
-        if (event.code === "Space" && gameMode === 'enemies') {
-            shoot();
-        }
-    });
+function update() {
+    bird.velocity += bird.gravity;
+    bird.y += bird.velocity;
 
-    window.addEventListener("mousedown", () => {
-        jump();
-    });
-
-    document.getElementById("startGame").addEventListener("click", () => {
-        document.getElementById("menu").style.display = 'none';
+    if (bird.y + bird.height > canvas.height || bird.y < 0) {
         resetGame();
-        gameLoop();
-    });
-
-    document.getElementById("gameMode").addEventListener("change", (event) => {
-        gameMode = event.target.value;
-    });
-
-    document.getElementById("sound").addEventListener("change", () => {
-        soundOn = document.getElementById("sound").checked;
-    });
-
-    function jump() {
-        bird.velocity = bird.lift;
     }
 
-    function shoot() {
-        let bullet = {
-            x: bird.x + bird.width,
-            y: bird.y + bird.height / 2,
-            width: 10,
-            height: 5,
-            directionX: bulletSpeed,
-            directionY: (Math.random() - 0.5) * 2
-        };
-        bullets.push(bullet);
-        if (soundOn) piuSound.play();
+    backgroundX -= backgroundSpeed;
+    if (backgroundX <= -canvas.width) {
+        backgroundX = 0;
     }
 
-    function createObstacle() {
-        let obstacleHeight = Math.random() * (canvas.height / 2);
-        let obstacle = {
-            x: canvas.width,
-            topHeight: obstacleHeight,
-            bottomY: obstacleHeight + 150
-        };
-        obstacles.push(obstacle);
-    }
+    if (gameMode === 'obstacles') {
+        obstacles.forEach((obstacle, index) => {
+            obstacle.x -= 4;
 
-    function createEnemy() {
-        let enemy = {
-            x: canvas.width,
-            y: Math.random() * (canvas.height - 40),
-            width: 30 + Math.random() * 20,
-            height: 30 + Math.random() * 20,
-            speed: 1 + Math.random() * 4,
-            color: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
-            shape: Math.random() > 0.5 ? 'circle' : 'triangle'
-        };
-        enemies.push(enemy);
-    }
-
-    function update() {
-        bird.velocity += bird.gravity;
-        bird.y += bird.velocity;
-
-        if (bird.y + bird.height > canvas.height || bird.y < 0) {
-            resetGame();
-        }
-
-        backgroundX -= backgroundSpeed;
-        if (backgroundX <= -canvas.width) {
-            backgroundX = 0;
-        }
-
-        if (gameMode === 'obstacles') {
-            obstacles.forEach((obstacle, index) => {
-                obstacle.x -= 4;
-
-                if (obstacle.x + 60 < 0) {
-                    obstacles.splice(index, 1);
-                    score += 5;
-                    document.getElementById('score').innerText = score;
-                    if (soundOn) piuSound.play();
-                }
-
-                if (bird.x + bird.width > obstacle.x && bird.x < obstacle.x + 60) {
-                    if (bird.y < obstacle.topHeight || bird.y + bird.height > obstacle.bottomY) {
-                        resetGame();
-                    }
-                }
-            });
-
-            if (frame % 100 === 0) {
-                createObstacle();
+            if (obstacle.x + 60 < 0) {
+                obstacles.splice(index, 1);
+                score += 5;
+                document.getElementById('score').innerText = score;
+                if (soundOn) piuSound.play();
             }
 
-        } else if (gameMode === 'enemies') {
-            bullets.forEach((bullet, bIndex) => {
-                bullet.x += bullet.directionX;
-                bullet.y += bullet.directionY;
-
-                if (bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
-                    bullets.splice(bIndex, 1);
-                }
-
-                enemies.forEach((enemy, eIndex) => {
-                    if (bullet.x + bullet.width > enemy.x && bullet.x < enemy.x + enemy.width) {
-                        if (bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) {
-                            enemies.splice(eIndex, 1);
-                            bullets.splice(bIndex, 1);
-                            score += 5;
-                            document.getElementById('score').innerText = score;
-                            if (soundOn) piuSound.play();
-                        }
-                    }
-                });
-            });
-
-            enemies.forEach((enemy, index) => {
-                enemy.x -= enemy.speed;
-
-                if (enemy.x + enemy.width < 0) {
-                    enemies.splice(index, 1);
-                }
-
-                if (bird.x + bird.width > enemy.x && bird.x < enemy.x + enemy.width) {
-                    if (bird.y < enemy.y + enemy.height && bird.y + bird.height > enemy.y) {
-                        resetGame();
-                    }
-                }
-            });
-
-            if (frame % 100 === 0) {
-                createEnemy();
-            }
-
-            if (detectMobile() && gameMode === 'enemies') {
-                let currentTime = Date.now();
-                if (currentTime - lastShootTime > shootInterval) {
-                    shoot();
-                    lastShootTime = currentTime;
+            if (bird.x + bird.width > obstacle.x && bird.x < obstacle.x + 60) {
+                if (bird.y < obstacle.topHeight || bird.y + bird.height > obstacle.bottomY) {
+                    resetGame();
                 }
             }
-        }
-
-        frame++;
-        draw();
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.drawImage(mountainsImage, backgroundX, 0, canvas.width, canvas.height / 2);
-        ctx.drawImage(mountainsImage, backgroundX + canvas.width, 0, canvas.width, canvas.height / 2);
-        ctx.drawImage(treesImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
-        ctx.drawImage(treesImage, backgroundX + canvas.width, canvas.height / 2, canvas.width, canvas.height / 2);
-
-        ctx.drawImage(bird.image, bird.x, bird.y, bird.width, bird.height);
-
-        bullets.forEach(bullet => {
-            ctx.fillStyle = "red";
-            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
         });
 
-        if (gameMode === 'enemies') {
-            enemies.forEach(enemy => {
-                ctx.fillStyle = enemy.color;
-                if (enemy.shape === 'circle') {
-                    ctx.beginPath();
-                    ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.width / 2, 0, 2 * Math.PI);
-                    ctx.fill();
-                } else {
-                    ctx.beginPath();
-                    ctx.moveTo(enemy.x, enemy.y + enemy.height);
-                    ctx.lineTo(enemy.x + enemy.width / 2, enemy.y);
-                    ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height);
-                    ctx.closePath();
-                    ctx.fill();
+        if (frame % 100 === 0) {
+            createObstacle();
+        }
+
+    } else if (gameMode === 'enemies') {
+        bullets.forEach((bullet, bIndex) => {
+            bullet.x += bullet.directionX;
+            bullet.y += bullet.directionY;
+
+            if (bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                bullets.splice(bIndex, 1);
+            }
+
+            enemies.forEach((enemy, eIndex) => {
+                if (bullet.x + bullet.width > enemy.x && bullet.x < enemy.x + enemy.width) {
+                    if (bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) {
+                        enemies.splice(eIndex, 1);
+                        bullets.splice(bIndex, 1);
+                        score += 5;
+                        document.getElementById('score').innerText = score;
+                        if (soundOn) piuSound.play();
+                    }
                 }
             });
-        } else {
-            obstacles.forEach(obstacle => {
-                ctx.fillStyle = "green";
-                ctx.fillRect(obstacle.x, 0, 60, obstacle.topHeight);
-                ctx.fillRect(obstacle.x, obstacle.bottomY, 60, canvas.height - obstacle.bottomY);
-            });
+        });
+
+        enemies.forEach((enemy, index) => {
+            enemy.x -= enemy.speed;
+
+            if (enemy.x + enemy.width < 0) {
+                enemies.splice(index, 1);
+            }
+
+            if (bird.x + bird.width > enemy.x && bird.x < enemy.x + enemy.width) {
+                if (bird.y < enemy.y + enemy.height && bird.y + bird.height > enemy.y) {
+                    resetGame();
+                }
+            }
+        });
+
+        if (frame % 100 === 0) {
+            createEnemy();
+        }
+
+        if (detectMobile() && gameMode === 'enemies') {
+            let currentTime = Date.now();
+            if (currentTime - lastShootTime > shootInterval) {
+                shoot();
+                lastShootTime = currentTime;
+            }
         }
     }
 
-    function resetGame() {
-        score = 0;
-        document.getElementById('score').innerText = score;
-        bird.y = canvas.height / 2;
-        bird.velocity = 0;
-        obstacles = [];
-        bullets = [];
-        enemies = [];
-        frame = 0;
-        automaticShooting = false;
-        document.getElementById("menu").style.display = 'block';
-    }
+    frame++;
+    draw();
+}
 
-    function gameLoop() {
-        update();
-        requestAnimationFrame(gameLoop);
-    }
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    function detectMobile() {
-        return /Mobi|Android/i.test(navigator.userAgent);
+    ctx.drawImage(mountainsImage, backgroundX, 0, canvas.width, canvas.height / 2);
+    ctx.drawImage(mountainsImage, backgroundX + canvas.width, 0, canvas.width, canvas.height / 2);
+    ctx.drawImage(treesImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
+    ctx.drawImage(treesImage, backgroundX + canvas.width, canvas.height / 2, canvas.width, canvas.height / 2);
+
+    ctx.drawImage(bird.image, bird.x, bird.y, bird.width, bird.height);
+
+    drawObstaclesOrEnemies();
+
+    bullets.forEach(bullet => {
+        ctx.fillStyle = "red";
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+    });
+}
+
+function drawObstaclesOrEnemies() {
+    if (gameMode === 'enemies') {
+        enemies.forEach(enemy => {
+            ctx.fillStyle = enemy.color;
+            if (enemy.shape === 'circle') {
+                ctx.beginPath();
+                ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.width / 2, 0, 2 * Math.PI);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(enemy.x, enemy.y + enemy.height);
+                ctx.lineTo(enemy.x + enemy.width / 2, enemy.y);
+                ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height);
+                ctx.closePath();
+                ctx.fill();
+            }
+        });
+    } else {
+        obstacles.forEach(obstacle => {
+            ctx.fillStyle = "green";
+            ctx.fillRect(obstacle.x, 0, 60, obstacle.topHeight);
+            ctx.fillRect(obstacle.x, obstacle.bottomY, 60, canvas.height - obstacle.bottomY);
+        });
     }
+}
+
+function resetGame() {
+    score = 0;
+    document.getElementById('score').innerText = score;
+    bird.y = canvas.height / 2;
+    bird.velocity = 0;
+    obstacles = [];
+    bullets = [];
+    enemies = [];
+    frame = 0;
+    automaticShooting = false;
+    document.getElementById("menu").style.display = 'none'; // Hide menu when starting new game
+}
+
+function gameLoop() {
+    update();
+    requestAnimationFrame(gameLoop);
+}
+
+function detectMobile() {
+    return /Mobi|Android/i.test(navigator.userAgent);
+}
+
 </script>
 
 </body>
