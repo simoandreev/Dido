@@ -145,12 +145,21 @@
         }
     });
 
+    window.addEventListener("touchstart", (event) => {
+        if (gameMode === 'enemies') {
+            jump();
+            event.preventDefault();
+        }
+    });
+
     function detectMobile() {
         return /Mobi|Android/i.test(navigator.userAgent);
     }
 
     function jump() {
-        bird.velocity = bird.lift;
+        if (gameMode === 'obstacles' || gameMode === 'enemies') {
+            bird.velocity = bird.lift;
+        }
     }
 
     function shoot() {
@@ -379,6 +388,21 @@
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.code === 'Space') {
+            jump();
+        }
+    });
+
+    window.addEventListener('touchstart', (event) => {
+        jump();
+        event.preventDefault();
+    });
+
+    document.querySelector('input[name="gameMode"]').addEventListener('change', () => {
+        automaticShooting = detectMobile() && document.querySelector('input[name="gameMode"]:checked').value === 'enemies';
     });
 </script>
 
