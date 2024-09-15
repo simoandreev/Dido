@@ -22,26 +22,29 @@
             font-family: Arial, sans-serif;
             color: #333;
         }
-        #menu, #gameOverText, #resetGame {
+        #menu, #gameOverText {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
+            display: none;
+        }
+        #menu {
+            display: block;
         }
         #gameOverText {
-            display: none;
             font-size: 48px;
             color: red;
         }
         #resetGame {
-            display: none;
             font-size: 24px;
             color: green;
             cursor: pointer;
             border: 2px solid green;
             padding: 10px;
             border-radius: 5px;
+            display: none;
         }
         input[type="radio"], input[type="checkbox"] {
             margin-right: 10px;
@@ -52,7 +55,7 @@
 
 <canvas id="gameCanvas"></canvas>
 <div id="score-container">
-    Точки: <span id="score">0</span>
+    Points: <span id="score">0</span>
 </div>
 
 <div id="menu">
@@ -68,7 +71,7 @@
     <br>
     <label>
         <input type="checkbox" id="soundToggle" checked>
-        Включи звук
+        Sound On
     </label>
     <br>
     <button onclick="startGame()">Start Game</button>
@@ -82,8 +85,8 @@
     <button id="resetGame" onclick="resetGame()">Reset Game</button>
 </div>
 
-<audio id="hitSound" src="Проект Дидо/sounds/hit-sound.mp3" preload="auto"></audio>
-<audio id="pointSound" src="Проект Дидо/sounds/point-101soundboards.mp3" preload="auto"></audio>
+<audio id="hitSound" src="sounds/hit-sound.mp3" preload="auto"></audio>
+<audio id="pointSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
@@ -115,14 +118,14 @@
         lift: -7.5,
         image: new Image(),
     };
-    bird.image.src = 'Проект Дидо/images/pngegg.png';
+    bird.image.src = 'images/pngegg.png';
 
     let backgroundX = 0;
     const backgroundSpeed = 0.4; // 80% reduction
     let mountainsImage = new Image();
     let treesImage = new Image();
-    mountainsImage.src = "Проект Дидо/images/mountain.png";
-    treesImage.src = "Проект Дидо/images/tree.png";
+    mountainsImage.src = "images/mountain.png";
+    treesImage.src = "images/tree.png";
 
     const obstacleWidth = 60;
     const obstacleGap = 300; // Increased distance between obstacles
@@ -282,53 +285,47 @@
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw background
         ctx.drawImage(mountainsImage, backgroundX, 0, canvas.width, canvas.height / 2);
         ctx.drawImage(mountainsImage, backgroundX + canvas.width, 0, canvas.width, canvas.height / 2);
+
         ctx.drawImage(treesImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
         ctx.drawImage(treesImage, backgroundX + canvas.width, canvas.height / 2, canvas.width, canvas.height / 2);
 
-        // Draw obstacles
+        ctx.drawImage(bird.image, bird.x, bird.y, bird.width, bird.height);
+
         if (gameMode === 'obstacles') {
             obstacles.forEach(obstacle => {
-                ctx.fillStyle = "#228B22";
+                ctx.fillStyle = 'green';
                 ctx.fillRect(obstacle.x, 0, obstacleWidth, obstacle.topHeight);
                 ctx.fillRect(obstacle.x, obstacle.bottomY, obstacleWidth, canvas.height - obstacle.bottomY);
             });
-        }
-
-        // Draw enemies
-        if (gameMode === 'enemies') {
+        } else if (gameMode === 'enemies') {
             enemies.forEach(enemy => {
                 ctx.fillStyle = enemy.color;
                 if (enemy.shape === 'circle') {
                     ctx.beginPath();
-                    ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, Math.PI * 2);
+                    ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.width / 2, 0, Math.PI * 2);
                     ctx.fill();
                 } else if (enemy.shape === 'triangle') {
                     ctx.beginPath();
-                    ctx.moveTo(enemy.x, enemy.y - enemy.height / 2);
-                    ctx.lineTo(enemy.x - enemy.width / 2, enemy.y + enemy.height / 2);
-                    ctx.lineTo(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    ctx.moveTo(enemy.x, enemy.y + enemy.height);
+                    ctx.lineTo(enemy.x + enemy.width / 2, enemy.y);
+                    ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height);
                     ctx.closePath();
                     ctx.fill();
                 }
             });
+
+            bullets.forEach(bullet => {
+                ctx.fillStyle = 'black';
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            });
         }
 
-        // Draw bullets
-        bullets.forEach(bullet => {
-            ctx.fillStyle = "#FF0000";
-            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-        });
-
-        // Draw bird
-        ctx.drawImage(bird.image, bird.x, bird.y, bird.width, bird.height);
-
-        // Draw score
-        ctx.fillStyle = "#333";
-        ctx.font = "48px Arial";
-        ctx.fillText(`Точки: ${score}`, 20, 50);
+        if (gameOver) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
     }
 
     function startGame() {
@@ -339,22 +336,19 @@
         gameOver = false;
         score = 0;
         document.getElementById('score').innerText = score;
-
-        bird.x = 50;
-        bird.y = canvas.height / 2;
-        bird.velocity = 0;
-
+        frame = 0;
         obstacles = [];
         bullets = [];
         enemies = [];
-        frame = 0;
+        bird.y = canvas.height / 2;
+        bird.velocity = 0;
 
         gameMode = document.querySelector('input[name="gameMode"]:checked').value;
+        soundOn = document.getElementById('soundToggle').checked;
+        automaticShooting = detectMobile() && gameMode === 'enemies';
 
-        if (detectMobile() && gameMode === 'enemies') {
-            automaticShooting = true;
-        } else {
-            automaticShooting = false;
+        if (automaticShooting) {
+            lastShootTime = Date.now();
         }
 
         requestAnimationFrame(gameLoop);
@@ -362,29 +356,30 @@
 
     function endGame() {
         document.getElementById('gameOverText').style.display = 'block';
-        document.getElementById('resetGame').style.display = 'block';
         document.getElementById('finalScore').innerText = score;
-        gameOver = true;
+        document.getElementById('resetGame').style.display = 'block';
     }
 
     function resetGame() {
+        document.getElementById('menu').style.display = 'block';
         document.getElementById('gameOverText').style.display = 'none';
         document.getElementById('resetGame').style.display = 'none';
-        document.getElementById('menu').style.display = 'block';
+
+        gameOver = false;
     }
 
     function gameLoop() {
         if (!gameOver) {
             update();
+            draw();
             requestAnimationFrame(gameLoop);
         }
     }
 
-    // Initialize game
-    document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById('menu').style.display = 'block';
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     });
-
 </script>
 
 </body>
