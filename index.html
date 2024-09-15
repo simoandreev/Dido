@@ -277,6 +277,32 @@
             });
         }
 
+        function drawObstaclesOrEnemies() {
+            if (gameMode === 'obstacles') {
+                obstacles.forEach(obstacle => {
+                    ctx.fillStyle = "green";
+                    ctx.fillRect(obstacle.x, 0, 60, obstacle.topHeight);
+                    ctx.fillRect(obstacle.x, obstacle.bottomY, 60, canvas.height - obstacle.bottomY);
+                });
+            } else if (gameMode === 'enemies') {
+                enemies.forEach(enemy => {
+                    ctx.fillStyle = enemy.color;
+                    if (enemy.shape === 'circle') {
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, 2 * Math.PI);
+                        ctx.fill();
+                    } else if (enemy.shape === 'triangle') {
+                        ctx.beginPath();
+                        ctx.moveTo(enemy.x, enemy.y);
+                        ctx.lineTo(enemy.x + enemy.width, enemy.y);
+                        ctx.lineTo(enemy.x + enemy.width / 2, enemy.y - enemy.height);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                });
+            }
+        }
+
         function detectMobile() {
             return /Mobi|Android/i.test(navigator.userAgent);
         }
