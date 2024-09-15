@@ -119,6 +119,7 @@
 
     document.getElementById("startGame").addEventListener("click", () => {
         document.getElementById("menu").style.display = 'none';
+        resetGame();
         gameLoop();
     });
 
@@ -245,9 +246,11 @@
                 createEnemy();
             }
 
-            if (detectMobile()) {
-                if (frame % 30 === 0) {
+            if (detectMobile() && gameMode === 'enemies') {
+                let currentTime = Date.now();
+                if (currentTime - lastShootTime > shootInterval) {
                     shoot();
+                    lastShootTime = currentTime;
                 }
             }
         }
@@ -317,7 +320,6 @@
     function detectMobile() {
         return /Mobi|Android/i.test(navigator.userAgent);
     }
-
 </script>
 
 </body>
