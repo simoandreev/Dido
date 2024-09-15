@@ -160,6 +160,7 @@
             directionY: 0
         };
         bullets.push(bullet);
+        lastShootTime = Date.now(); // Update the last shoot time
     }
 
     function createObstacle() {
@@ -334,7 +335,7 @@
         document.getElementById('menu').style.display = 'none';
         document.getElementById('gameOverText').style.display = 'none';
         document.getElementById('resetGame').style.display = 'none';
-        
+
         gameOver = false;
         score = 0;
         document.getElementById('score').innerText = score;
@@ -348,7 +349,9 @@
         enemies = [];
         frame = 0;
 
-        if (detectMobile() && document.querySelector('input[name="gameMode"]:checked').value === 'enemies') {
+        gameMode = document.querySelector('input[name="gameMode"]:checked').value;
+
+        if (detectMobile() && gameMode === 'enemies') {
             automaticShooting = true;
         } else {
             automaticShooting = false;
