@@ -37,6 +37,18 @@
         #gameMode, #sound {
             font-size: 20px;
         }
+        #gameOverText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none; /* Initially hidden */
+        }
+        #gameOverText h1, #gameOverText h2 {
+            color: black;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -56,6 +68,11 @@
         <input type="checkbox" id="sound" checked>
         <br>
         <button id="startGame">Start Game</button>
+    </div>
+    <div id="gameOverText">
+        <h1>Game Over</h1>
+        <h2>Final Score: <span id="finalScore">0</span></h2>
+        <button id="restartGame">Restart Game</button>
     </div>
     <audio id="piuSound" src="sounds/point-101soundboards.mp3" preload="auto"></audio>
     <audio id="hitSound" src="sounds/hit-sound.mp3" preload="auto"></audio>
@@ -122,6 +139,10 @@
             startGame();
         });
 
+        document.getElementById("restartGame").addEventListener("click", () => {
+            startGame();
+        });
+
         document.getElementById("gameMode").addEventListener("change", (event) => {
             gameMode = event.target.value;
         });
@@ -152,7 +173,7 @@
             let obstacle = {
                 x: canvas.width,
                 topHeight: obstacleHeight,
-                bottomY: obstacleHeight + 30 // Reduced by 80%
+                bottomY: obstacleHeight + 60 // Increased by 80%
             };
             obstacles.push(obstacle);
         }
@@ -161,8 +182,8 @@
             let enemy = {
                 x: canvas.width,
                 y: Math.random() * (canvas.height - 40),
-                width: 6 + Math.random() * 4, // Reduced by 80%
-                height: 6 + Math.random() * 4, // Reduced by 80%
+                width: 20 + Math.random() * 20, // Reset to previous size
+                height: 20 + Math.random() * 20, // Reset to previous size
                 speed: 0.2 + Math.random() * 0.8, // Reduced by 80%
                 color: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
                 shape: Math.random() > 0.5 ? 'circle' : 'triangle'
@@ -204,7 +225,7 @@
                     }
                 });
 
-                if (frame % 100 === 0) {
+                if (frame % 200 === 0) { // Increased by 80%
                     createObstacle();
                 }
 
@@ -244,12 +265,12 @@
                     }
                 });
 
-                if (frame % 100 === 0) {
+                if (frame % 100 === 0) { // Increased by 80%
                     createEnemy();
                 }
 
-                if (detectMobile() && gameMode === 'enemies') {
-                    let currentTime = Date.now();
+                let currentTime = new Date().getTime();
+                if (detectMobile() && automaticShooting) {
                     if (currentTime - lastShootTime > shootInterval) {
                         shoot();
                         lastShootTime = currentTime;
@@ -264,10 +285,9 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            ctx.drawImage(mountainsImage, backgroundX, 0, canvas.width, canvas.height / 2);
-            ctx.drawImage(mountainsImage, backgroundX + canvas.width, 0, canvas.width, canvas.height / 2);
+            // Draw background
+            ctx.drawImage(mountainsImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
             ctx.drawImage(treesImage, backgroundX, canvas.height / 2, canvas.width, canvas.height / 2);
-            ctx.drawImage(treesImage, backgroundX + canvas.width, canvas.height / 2, canvas.width, canvas.height / 2);
 
             ctx.drawImage(bird.image, bird.x, bird.y, bird.width, bird.height);
 
@@ -313,12 +333,13 @@
             gameOver = true;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "black";
-            ctx.font = "50px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
             ctx.font = "30px Arial";
-            ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 60);
-            document.getElementById("menu").style.display = "block";
+            ctx.textAlign = "center";
+            ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 20);
+            ctx.font = "20px Arial";
+            ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 20);
+            document.getElementById("gameOverText").style.display = "block";
+            document.getElementById("finalScore").innerText = score;
             if (soundOn) hitSound.play();
         }
 
@@ -334,6 +355,7 @@
             frame = 0;
             backgroundX = 0;
             document.getElementById("menu").style.display = "none";
+            document.getElementById("gameOverText").style.display = "none";
             requestAnimationFrame(gameLoop);
         }
 
